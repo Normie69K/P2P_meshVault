@@ -1,10 +1,13 @@
 package com.ltcoe
 
+import com.ltcoe.repository.FileRepository
 import com.ltcoe.repository.NodeRepository
 import com.ltcoe.repository.UserRepository
 import com.ltcoe.routes.authRoutes
+import com.ltcoe.routes.fileRoutes
 import com.ltcoe.routes.nodeRoutes
 import com.ltcoe.service.AuthService
+import com.ltcoe.service.FileService
 import com.ltcoe.service.NodeService
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -28,14 +31,17 @@ fun Application.module() {
     //Repository
     val userRepository = UserRepository()
     val nodeRepository = NodeRepository()
+    val fileRepository = FileRepository()
 
     //Service
     val authService = AuthService(userRepository)
     val nodeService = NodeService(nodeRepository)
+    val fileService = FileService(fileRepository , nodeService)
 
     // 2. Register Routes
     routing {
         authRoutes(authService)
         nodeRoutes(nodeService)
+        fileRoutes(fileService)
     }
 }
