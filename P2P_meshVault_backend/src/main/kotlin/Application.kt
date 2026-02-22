@@ -1,5 +1,6 @@
 package com.ltcoe
 
+import com.ltcoe.config.DatabaseConfig
 import com.ltcoe.repository.CreditRepository
 import com.ltcoe.repository.FileRepository
 import com.ltcoe.repository.NodeRepository
@@ -27,6 +28,13 @@ fun main() {
 }
 
 fun Application.module() {
+
+    val dbUrl = environment.config.property("database.url").getString()
+    val dbUser = environment.config.property("database.user").getString()
+    val dbPassword = environment.config.property("database.password").getString()
+
+    DatabaseConfig.init(dbUrl, dbUser, dbPassword)
+
     install(CallLogging)
     install(ContentNegotiation) {
         json()
