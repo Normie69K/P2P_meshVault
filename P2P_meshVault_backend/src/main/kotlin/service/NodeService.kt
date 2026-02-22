@@ -13,23 +13,20 @@ class NodeService(private val nodeRepository: NodeRepository) {
             publicKey = publicKey,
             ipAddress = ipAddress,
             port = port,
-            lastHeartbeat = System.currentTimeMillis()
+            lastHeartbeat = System.currentTimeMillis(),
+            isActive = true
         )
-        return nodeRepository.save(newNode)
+
+        return nodeRepository.register(newNode)
     }
 
     fun processHeartbeat(heartbeat: NodeHeartbeat): Boolean {
-        val node = nodeRepository.findById(heartbeat.nodeId) ?: return false
-
-        // Update the last heartbeat timestamp
-        node.lastHeartbeat = System.currentTimeMillis()
-        node.isActive = true
-        nodeRepository.save(node)
-
+        nodeRepository.updateHeartbeat(heartbeat.nodeId, System.currentTimeMillis())
         return true
     }
 
     fun getActiveNodes(): List<Node> {
-        return nodeRepository.getAllActive()
+        val fiveMinutesInMs = 5 * 60 * 1000L
+        return nodeRepository.getActiveNodes(fiveMinutesInMs)
     }
 }

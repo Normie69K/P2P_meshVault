@@ -5,8 +5,7 @@ ktor:
   deployment:
     port: 8080
 
-    # Configure database
-    database:
-      url: ${DB_URL}
-      user: ${DB_USER}
-      password: ${DB_PASSWORD}
+database:
+  url: ${DB_URL}
+  user: ${DB_USER}
+  password: ${DB_PASSWORD}

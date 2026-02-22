@@ -18,7 +18,12 @@ object DatabaseConfig {
         println("Db connected")
 
         transaction {
-            SchemaUtils.create(Users)
+            SchemaUtils.create(
+                com.ltcoe.model.entity.Users,
+                com.ltcoe.model.entity.Nodes,
+                com.ltcoe.model.entity.Files,
+                com.ltcoe.model.entity.Credits
+            )
         }
     }
 }

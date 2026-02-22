@@ -1,24 +1,48 @@
 package com.ltcoe.repository
 
+import com.ltcoe.model.entity.Credits
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.transaction
+
 class CreditRepository {
-    // Maps a PublicKey to their Credit Balance
-    private val balances = mutableMapOf<String, Long>()
 
     fun getBalance(publicKey: String): Long {
-        return balances.getOrDefault(publicKey, 0L)
+        return transaction {
+            Credits.select { Credits.publicKey eq publicKey }
+                .map { it[Credits.balance] }
+                .singleOrNull() ?: 0L
+        }
     }
 
     fun addBalance(publicKey: String, amount: Long) {
-        val currentBalance = getBalance(publicKey)
-        balances[publicKey] = currentBalance + amount
+        transaction {
+            val existingBalance = getBalance(publicKey)
+            if (existingBalance == 0L && Credits.select { Credits.publicKey eq publicKey }.empty()) {
+                // User doesn't exist in the credit table yet, insert them
+                Credits.insert {
+                    it[this.publicKey] = publicKey
+                    it[balance] = amount
+                }
+            } else {
+                // User exists, update their balance
+                Credits.update({ Credits.publicKey eq publicKey }) {
+                    it[balance] = existingBalance + amount
+                }
+            }
+        }
     }
 
     fun deductBalance(publicKey: String, amount: Long): Boolean {
-        val currentBalance = getBalance(publicKey)
-        if (currentBalance >= amount) {
-            balances[publicKey] = currentBalance - amount
-            return true
+        return transaction {
+            val existingBalance = getBalance(publicKey)
+            if (existingBalance >= amount) {
+                Credits.update({ Credits.publicKey eq publicKey }) {
+                    it[balance] = existingBalance - amount
+                }
+                true
+            } else {
+                false
+            }
         }
-        return false // Insufficient funds
     }
 }
