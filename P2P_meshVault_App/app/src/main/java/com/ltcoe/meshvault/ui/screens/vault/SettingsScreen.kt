@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -115,7 +116,7 @@ fun SettingsScreen() {
                 .fillMaxWidth()
                 .height(56.dp)
         ) {
-            Icon(Icons.Default.Logout, contentDescription = "Disconnect", tint = Color.Red)
+            Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Disconnect", tint = Color.Red)
             Spacer(modifier = Modifier.width(12.dp))
             Text("Disconnect Node", color = Color.Red, fontSize = 16.sp, fontWeight = FontWeight.Medium)
         }

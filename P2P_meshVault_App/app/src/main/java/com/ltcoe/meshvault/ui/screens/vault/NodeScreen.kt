@@ -155,7 +155,7 @@ fun NodeItem(id: String, location: String, latency: String, load: Float, loadTex
                 Text("Load", color = Color.LightGray, fontSize = 12.sp, modifier = Modifier.width(36.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 LinearProgressIndicator(
-                    progress = load,
+                    progress = { load },
                     color = AccentCyan,
                     trackColor = DarkBackground,
                     modifier = Modifier

@@ -8,6 +8,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -96,7 +98,7 @@ fun DashboardScreen() {
 
                 // Progress Bar
                 LinearProgressIndicator(
-                    progress = 0.45f,
+                    progress = {0.45f},
                     color = AccentCyan,
                     trackColor = DarkBackground,
                     modifier = Modifier
@@ -124,7 +126,7 @@ fun DashboardScreen() {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            StatCard(modifier = Modifier.weight(1f), icon = Icons.Default.ShowChart, title = "ACTIVE NODES", value = "12", suffix = " / 15")
+            StatCard(modifier = Modifier.weight(1f), icon = Icons.AutoMirrored.Filled.ShowChart, title = "ACTIVE NODES", value = "12", suffix = " / 15")
             StatCard(modifier = Modifier.weight(1f), icon = Icons.Default.Timer, title = "EXPIRING", value = "3", suffix = " files")
         }
 
@@ -195,7 +197,7 @@ fun FileItem(name: String, meta: String) {
                     .background(SurfaceDark, RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.InsertDriveFile, contentDescription = null, tint = Color.LightGray, modifier = Modifier.size(20.dp))
+                Icon(Icons.AutoMirrored.Filled.InsertDriveFile, contentDescription = null, tint = Color.LightGray, modifier = Modifier.size(20.dp))
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column {

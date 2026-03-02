@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -138,7 +139,7 @@ fun LoginScreen(onLoginClick: () -> Unit) {
                 ) {
                     Text("Decrypt & Connect", color = DarkBackground, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     Spacer(modifier = Modifier.weight(1f))
-                    Icon(Icons.Default.ArrowForward, contentDescription = "Login", tint = DarkBackground)
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Login", tint = DarkBackground)
                 }
             }
         }
