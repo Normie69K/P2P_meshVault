@@ -21,6 +21,7 @@ import com.ltcoe.meshvault.ui.components.CustomBottomNavBar
 import com.ltcoe.meshvault.ui.navigation.Screen
 import com.ltcoe.meshvault.ui.screens.auth.LoginScreen
 import com.ltcoe.meshvault.ui.screens.vault.DashboardScreen
+import com.ltcoe.meshvault.ui.screens.vault.NodesScreen
 import com.ltcoe.meshvault.ui.theme.DarkBackground
 
 @Composable
@@ -86,7 +87,7 @@ fun MainApp() {
             composable(Screen.Upload.route) { PlaceholderScreen("Secure Upload") }
 
             // 5. Nodes Route
-            composable(Screen.Nodes.route) { PlaceholderScreen("Network Nodes") }
+            composable(Screen.Nodes.route) { NodesScreen() }
 
             // 6. Settings Route
             composable(Screen.Settings.route) { PlaceholderScreen("Settings") }
