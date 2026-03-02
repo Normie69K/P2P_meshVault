@@ -22,6 +22,7 @@ import com.ltcoe.meshvault.ui.navigation.Screen
 import com.ltcoe.meshvault.ui.screens.auth.LoginScreen
 import com.ltcoe.meshvault.ui.screens.vault.DashboardScreen
 import com.ltcoe.meshvault.ui.screens.vault.NodesScreen
+import com.ltcoe.meshvault.ui.screens.vault.SettingsScreen
 import com.ltcoe.meshvault.ui.theme.DarkBackground
 
 @Composable
@@ -90,7 +91,7 @@ fun MainApp() {
             composable(Screen.Nodes.route) { NodesScreen() }
 
             // 6. Settings Route
-            composable(Screen.Settings.route) { PlaceholderScreen("Settings") }
+            composable(Screen.Settings.route) { SettingsScreen() }
         }
     }
 }
