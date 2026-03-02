@@ -20,6 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import com.ltcoe.meshvault.ui.components.CustomBottomNavBar
 import com.ltcoe.meshvault.ui.navigation.Screen
 import com.ltcoe.meshvault.ui.screens.auth.LoginScreen
+import com.ltcoe.meshvault.ui.screens.vault.DashboardScreen
 import com.ltcoe.meshvault.ui.theme.DarkBackground
 
 @Composable
@@ -76,7 +77,7 @@ fun MainApp() {
             }
 
             // 2. Dashboard Route
-            composable(Screen.Dashboard.route) { PlaceholderScreen("Dashboard") }
+            composable(Screen.Dashboard.route) { DashboardScreen() }
 
             // 3. Files Route
             composable(Screen.Files.route) { PlaceholderScreen("All Files") }
