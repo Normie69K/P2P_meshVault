@@ -23,6 +23,7 @@ import com.ltcoe.meshvault.ui.screens.auth.LoginScreen
 import com.ltcoe.meshvault.ui.screens.vault.DashboardScreen
 import com.ltcoe.meshvault.ui.screens.vault.NodesScreen
 import com.ltcoe.meshvault.ui.screens.vault.SettingsScreen
+import com.ltcoe.meshvault.ui.screens.vault.UploadScreen
 import com.ltcoe.meshvault.ui.theme.DarkBackground
 
 @Composable
@@ -85,7 +86,7 @@ fun MainApp() {
             composable(Screen.Files.route) { PlaceholderScreen("All Files") }
 
             // 4. Upload Route
-            composable(Screen.Upload.route) { PlaceholderScreen("Secure Upload") }
+            composable(Screen.Upload.route) { UploadScreen() }
 
             // 5. Nodes Route
             composable(Screen.Nodes.route) { NodesScreen() }
