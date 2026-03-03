@@ -59,6 +59,8 @@ dependencies {
     implementation(libs.firebase.crashlytics.buildtools)
     implementation("io.ktor:ktor-client-core:2.3.8")
     implementation("io.ktor:ktor-client-android:2.3.8")
+    implementation("io.ktor:ktor-server-cio:2.3.12")
+    implementation(libs.androidx.compose.foundation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

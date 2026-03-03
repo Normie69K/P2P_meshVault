@@ -1,6 +1,9 @@
 package com.ltcoe.meshvault.ui.screens.vault
 
+import android.graphics.BitmapFactory
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,17 +22,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.ltcoe.meshvault.ui.theme.*
 import com.ltcoe.meshvault.util.ApiClient
 import com.ltcoe.meshvault.util.DashboardFile
 import com.ltcoe.meshvault.util.DownloadManager
 import com.ltcoe.meshvault.util.SecureStorageManager
 import kotlinx.coroutines.launch
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,62 +51,88 @@ fun DashboardScreen() {
     var realFiles by remember { mutableStateOf<List<DashboardFile>>(emptyList()) }
     var selectedFile by remember { mutableStateOf<DashboardFile?>(null) }
     var showSheet by remember { mutableStateOf(false) }
+    var previewFile by remember { mutableStateOf<File?>(null) } // Holds the decrypted file for viewing
 
-    // Fetch the real list of files from Arch Linux on startup
     LaunchedEffect(Unit) {
         realFiles = ApiClient.getMyFiles()
         isLoading = false
     }
 
-    // --- 1. ACTION BOTTOM SHEET ---
+    // --- 1. FULL SCREEN IMAGE PREVIEWER ---
+    if (previewFile != null) {
+        Dialog(onDismissRequest = { previewFile = null }) {
+            Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+                val bitmap = remember(previewFile) { BitmapFactory.decodeFile(previewFile!!.absolutePath)?.asImageBitmap() }
+
+                if (bitmap != null) {
+                    Image(bitmap = bitmap, contentDescription = "Decrypted Image", modifier = Modifier.fillMaxSize())
+                } else {
+                    Text("Preview not available for this file type.", color = Color.White, modifier = Modifier.align(Alignment.Center))
+                }
+
+                IconButton(
+                    onClick = { previewFile = null },
+                    modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).background(Color.DarkGray.copy(alpha = 0.5f), CircleShape)
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                }
+            }
+        }
+    }
+
+    // --- 2. ACTION BOTTOM SHEET (Preview vs Save) ---
     if (showSheet && selectedFile != null) {
-        ModalBottomSheet(
-            onDismissRequest = { showSheet = false },
-            sheetState = sheetState,
-            containerColor = SurfaceDark
-        ) {
+        ModalBottomSheet(onDismissRequest = { showSheet = false }, sheetState = sheetState, containerColor = SurfaceDark) {
             Column(modifier = Modifier.padding(24.dp).fillMaxWidth().padding(bottom = 32.dp)) {
                 Text(selectedFile!!.name, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Text(selectedFile!!.details, color = Color.LightGray, fontSize = 14.sp)
-
                 Spacer(modifier = Modifier.height(32.dp))
 
+                // OPTION A: PREVIEW IN APP
                 Button(
                     onClick = {
                         scope.launch {
                             showSheet = false
-                            Toast.makeText(context, "Fetching master key...", Toast.LENGTH_SHORT).show()
-
-                            // 1. Trigger the real download & decrypt flow
-                            // Note: You'll need to pass the real SecretKey from SecureStorage in the next step
-                            val storedKey = secureStorage.getFileKey(selectedFile!!.id)
-
-                            if(storedKey != null){
-                                val success = DownloadManager.downloadAndDecryptFile(
-                                    context = context,
-                                    fileId = selectedFile!!.id,
-                                    fileName = selectedFile!!.name,
-                                    fileKey = storedKey
-                                )
-                                if (success) {
-                                    Toast.makeText(context, "File saved to Downloads", Toast.LENGTH_LONG).show()
-                                } else {
-                                    Toast.makeText(context, "Decryption Error : Check key Integrity", Toast.LENGTH_SHORT).show()
-                                }
-                            }else{
-                                Toast.makeText(context, "Error: Master Key not found on this device", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Decrypting for Preview...", Toast.LENGTH_SHORT).show()
+                            val key = secureStorage.getFileKey(selectedFile!!.id)
+                            if (key != null) {
+                                val file = DownloadManager.downloadAndDecryptFile(context, selectedFile!!.id, selectedFile!!.name, key, isForPreview = true)
+                                if (file != null) previewFile = file else Toast.makeText(context, "Decryption Failed", Toast.LENGTH_SHORT).show()
                             }
-
-
                         }
                     },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = AccentCyan, contentColor = DarkBackground),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Icon(Icons.Default.Download, contentDescription = null)
+                    Icon(Icons.Default.Visibility, contentDescription = null)
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text("Download & Decrypt", fontWeight = FontWeight.Bold)
+                    Text("Preview File", fontWeight = FontWeight.Bold)
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // OPTION B: EXPORT TO DEVICE
+                OutlinedButton(
+                    onClick = {
+                        scope.launch {
+                            showSheet = false
+                            Toast.makeText(context, "Exporting to Downloads...", Toast.LENGTH_SHORT).show()
+                            val key = secureStorage.getFileKey(selectedFile!!.id)
+                            if (key != null) {
+                                val file = DownloadManager.downloadAndDecryptFile(context, selectedFile!!.id, selectedFile!!.name, key, isForPreview = false)
+                                if (file != null) Toast.makeText(context, "Saved to Device Downloads!", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                    border = BorderStroke(1.dp, SurfaceDark),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Default.Download, contentDescription = null, tint = AccentCyan)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("Save to Device", fontWeight = FontWeight.Medium)
                 }
             }
         }
@@ -115,21 +147,9 @@ fun DashboardScreen() {
             }
         }
     } else {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(DarkBackground)
-                .padding(horizontal = 24.dp)
-                .verticalScroll(scrollState)
-        ) {
+        Column(modifier = Modifier.fillMaxSize().background(DarkBackground).padding(horizontal = 24.dp).verticalScroll(scrollState)) {
             Spacer(modifier = Modifier.height(48.dp))
-
-            // --- HEADER ---
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column {
                     Text("Dashboard", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -142,42 +162,25 @@ fun DashboardScreen() {
                     Icon(Icons.Default.Notifications, contentDescription = null, tint = AccentCyan)
                 }
             }
-
             Spacer(modifier = Modifier.height(32.dp))
-
-            // --- STORAGE CARD ---
             StorageCard()
-
             Spacer(modifier = Modifier.height(16.dp))
-
-            // --- STATS ROW ---
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 StatCard(modifier = Modifier.weight(1f), icon = Icons.AutoMirrored.Filled.ShowChart, title = "ACTIVE NODES", value = "1", suffix = " / 1")
                 StatCard(modifier = Modifier.weight(1f), icon = Icons.Default.Timer, title = "HEALTH", value = "100", suffix = " %")
             }
-
             Spacer(modifier = Modifier.height(32.dp))
-
-            // --- RECENT FILES LIST ---
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text("Recent Files", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Medium)
                 Text("VIEW ALL", color = AccentCyan, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
-
             Spacer(modifier = Modifier.height(16.dp))
 
             if (realFiles.isEmpty()) {
                 Text("Your vault is empty.", color = Color.LightGray, fontSize = 14.sp)
             } else {
                 realFiles.forEach { file ->
-                    FileItem(
-                        name = file.name,
-                        meta = file.details,
-                        onClick = {
-                            selectedFile = file
-                            showSheet = true
-                        }
-                    )
+                    FileItem(name = file.name, meta = file.details, onClick = { selectedFile = file; showSheet = true })
                 }
             }
             Spacer(modifier = Modifier.height(100.dp))

@@ -11,40 +11,39 @@ object DownloadManager {
         context: Context,
         fileId: String,
         fileName: String,
-        fileKey: SecretKey
-    ): Boolean {
+        fileKey: SecretKey?,
+        isForPreview: Boolean
+    ): File? {
         return try {
-            // FIX: Use the app's internal cache directory instead of public Downloads
-            // This avoids all Android Scoped Storage EPERM crashes!
             val safeFileName = fileName.replace(":", "_")
-            val outputFile = File(context.cacheDir, safeFileName)
 
+            val targetDir = if (isForPreview) {
+                context.cacheDir
+            } else {
+                context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS) ?: context.cacheDir
+            }
+
+            val outputFile = File(targetDir, safeFileName)
             val fos = FileOutputStream(outputFile)
 
             var chunkIndex = 0
             var hasMoreChunks = true
 
             while (hasMoreChunks) {
-                // Fetch encrypted chunk from Arch Linux
                 val encryptedBytes = ApiClient.downloadChunk(fileId, chunkIndex)
-
                 if (encryptedBytes != null) {
-                    // Decrypt the chunk
                     val decryptedBytes = CryptoManager.decryptChunk(encryptedBytes, fileKey)
-
-                    // Write to the file
                     fos.write(decryptedBytes)
                     chunkIndex++
                 } else {
                     hasMoreChunks = false
                 }
             }
-
             fos.close()
-            true
+            outputFile
         } catch (e: Exception) {
             e.printStackTrace()
-            false
+            null
         }
     }
 }
