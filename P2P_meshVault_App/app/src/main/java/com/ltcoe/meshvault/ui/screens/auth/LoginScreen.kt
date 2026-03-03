@@ -1,50 +1,35 @@
 package com.ltcoe.meshvault.ui.screens.auth
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.AddModerator
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.VpnKey
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ltcoe.meshvault.ui.theme.AccentCyan
-import com.ltcoe.meshvault.ui.theme.DarkBackground
-import com.ltcoe.meshvault.ui.theme.SurfaceDark
+import androidx.navigation.NavController
+import com.ltcoe.meshvault.ui.navigation.Screen
+import com.ltcoe.meshvault.ui.theme.*
+import com.ltcoe.meshvault.util.CryptoManager
+
+// Define the three states of our login flow
+enum class AuthStep { WELCOME, CREATE, IMPORT }
 
 @Composable
-fun LoginScreen(onLoginClick: () -> Unit) {
-    var nodeAddress by remember { mutableStateOf("0x7a...4f2B") }
-    var masterKey by remember { mutableStateOf("••••••••••••") }
+fun LoginScreen(navController: NavController) {
+    var currentStep by remember { mutableStateOf(AuthStep.WELCOME) }
 
     Column(
         modifier = Modifier
@@ -55,101 +40,159 @@ fun LoginScreen(onLoginClick: () -> Unit) {
     ) {
         Spacer(modifier = Modifier.height(80.dp))
 
-        // Hexagon Logo Placeholder (You can replace with an actual Image/Icon)
-        Box(
-            modifier = Modifier
-                .size(64.dp)
-                .border(3.dp, AccentCyan, RoundedCornerShape(16.dp))
-                .shadow(15.dp, spotColor = AccentCyan) // Glow effect
-        )
+        // App Logo & Title
+        Icon(Icons.Default.AddModerator, contentDescription = "Logo", tint = AccentCyan, modifier = Modifier.size(64.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("MeshVault", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+        Text("Decentralized Storage Node", color = Color.LightGray, fontSize = 14.sp)
+
+        Spacer(modifier = Modifier.height(64.dp))
+
+        // Switch between the different UI states
+        when (currentStep) {
+            AuthStep.WELCOME -> WelcomeOptions(
+                onCreateClick = { currentStep = AuthStep.CREATE },
+                onImportClick = { currentStep = AuthStep.IMPORT }
+            )
+            AuthStep.CREATE -> CreateWalletFlow(navController)
+            AuthStep.IMPORT -> ImportWalletFlow(navController)
+        }
+    }
+}
+
+@Composable
+fun WelcomeOptions(onCreateClick: () -> Unit, onImportClick: () -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // Option A: Create New
+        Button(
+            onClick = onCreateClick,
+            colors = ButtonDefaults.buttonColors(containerColor = AccentCyan, contentColor = DarkBackground),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth().height(56.dp)
+        ) {
+            Icon(Icons.Default.AddModerator, contentDescription = "Create")
+            Spacer(modifier = Modifier.width(12.dp))
+            Text("Create New Vault", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text(
-            text = "Welcome Back",
-            color = Color.White,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold
-        )
+        // Option B: Import Existing
+        OutlinedButton(
+            onClick = onImportClick,
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+            border = BorderStroke(1.dp, SurfaceDark),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth().height(56.dp)
+        ) {
+            Icon(Icons.Default.Key, contentDescription = "Import", tint = Color.LightGray)
+            Spacer(modifier = Modifier.width(12.dp))
+            Text("Import Master Key", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+        }
+    }
+}
 
+
+@Composable
+fun CreateWalletFlow(navController: NavController) {
+    // 1. Generate the wallet ONLY ONCE when this screen opens
+    val generatedWallet = remember { CryptoManager.createNewWallet() }
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text("Your Master Key", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-
         Text(
-            text = "Access your encrypted decentralized storage\nnodes.",
-            color = Color.LightGray,
+            "Write this down offline. If you lose this key, your files are gone forever. MeshVault cannot recover it.",
+            color = Color.Red,
             fontSize = 14.sp,
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        // The Input Card
-        Card(
-            colors = CardDefaults.cardColors(containerColor = SurfaceDark),
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth()
+        // 2. Display the REAL generated private key hex
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(SurfaceDark, RoundedCornerShape(8.dp))
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
+            // We split the hex string with spaces every 8 characters to make it easier to read
+            val formattedKey = generatedWallet.privateKeyHex.chunked(8).joinToString(" ")
 
-                Text("NODE ADDRESS", color = Color.LightGray, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = nodeAddress,
-                    onValueChange = { nodeAddress = it },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = DarkBackground,
-                        focusedContainerColor = DarkBackground,
-                        unfocusedBorderColor = Color.Transparent,
-                        focusedBorderColor = AccentCyan,
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text("MASTER KEY", color = Color.LightGray, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = masterKey,
-                    onValueChange = { masterKey = it },
-                    visualTransformation = PasswordVisualTransformation(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = DarkBackground,
-                        focusedContainerColor = DarkBackground,
-                        unfocusedBorderColor = Color.Transparent,
-                        focusedBorderColor = AccentCyan,
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // The Cyan Login Button
-                Button(
-                    onClick = onLoginClick,
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentCyan),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth().height(50.dp)
-                ) {
-                    Text("Decrypt & Connect", color = DarkBackground, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Spacer(modifier = Modifier.weight(1f))
-                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Login", tint = DarkBackground)
-                }
-            }
+            Text(
+                text = formattedKey,
+                color = AccentCyan,
+                fontSize = 16.sp,
+                fontFamily = FontFamily.Monospace,
+                letterSpacing = 1.sp,
+                textAlign = TextAlign.Center
+            )
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Biometric Bottom Button
-        TextButton(onClick = { /* Trigger Biometrics */ }) {
-            Text("Use Biometric Auth", color = Color.LightGray)
-        }
+        // Display the Public Address just so the user knows it
+        Text("Node Address: 0x${generatedWallet.publicKeyHex.take(8)}...", color = Color.LightGray, fontSize = 12.sp)
+
         Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            onClick = {
+                // TODO: Save the generatedWallet.privateKeyHex to Android EncryptedSharedPreferences here!
+
+                navController.navigate(Screen.Dashboard.route) {
+                    popUpTo(Screen.Login.route) { inclusive = true }
+                }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = AccentCyan, contentColor = DarkBackground),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth().height(56.dp)
+        ) {
+            Text("I Saved It Safely", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.width(8.dp))
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Go")
+        }
+    }
+}
+
+@Composable
+fun ImportWalletFlow(navController: NavController) {
+    var masterKey by remember { mutableStateOf("") }
+
+    Column {
+        OutlinedTextField(
+            value = masterKey,
+            onValueChange = { masterKey = it },
+            label = { Text("Enter 64-character Hex Key", color = Color.LightGray) },
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = AccentCyan,
+                unfocusedBorderColor = SurfaceDark,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                cursorColor = AccentCyan
+            ),
+            singleLine = true,
+            leadingIcon = { Icon(Icons.Default.VpnKey, contentDescription = "Key", tint = Color.LightGray) }
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            onClick = {
+                // TODO: Here we will verify the math before navigating
+                navController.navigate(Screen.Dashboard.route) {
+                    popUpTo(Screen.Login.route) { inclusive = true }
+                }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = AccentCyan, contentColor = DarkBackground),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            enabled = masterKey.isNotBlank()
+        ) {
+            Text("Restore Vault", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        }
     }
 }

@@ -69,15 +69,7 @@ fun MainApp() {
         ) {
 
             // 1. Login Route
-            composable(Screen.Login.route) {
-                LoginScreen(onLoginClick = {
-                    // Navigate to Dashboard and destroy the Login screen so
-                    // the user can't press the Android "Back" button to go back to login
-                    navController.navigate(Screen.Dashboard.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
-                    }
-                })
-            }
+            composable(Screen.Login.route) { LoginScreen(navController = navController) }
 
             // 2. Dashboard Route
             composable(Screen.Dashboard.route) { DashboardScreen() }
