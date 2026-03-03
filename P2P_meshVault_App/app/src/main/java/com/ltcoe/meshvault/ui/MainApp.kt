@@ -106,7 +106,18 @@ fun MainApp() {
             composable(Screen.Nodes.route) { NodesScreen() }
 
             // 6. Settings Route
-            composable(Screen.Settings.route) { SettingsScreen() }
+            composable(Screen.Settings.route) {
+                SettingsScreen(
+                    onLogoutClick = {
+                        // 1. Wipe the hardware wallet
+                        secureStorage.clearWallet()
+                        // 2. Route to Login and destroy the backstack so they can't hit the back button
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                )
+            }
         }
     }
 }
