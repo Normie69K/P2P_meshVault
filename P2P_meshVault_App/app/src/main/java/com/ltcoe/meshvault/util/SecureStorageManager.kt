@@ -3,6 +3,9 @@ package com.ltcoe.meshvault.util
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import javax.crypto.spec.SecretKeySpec
+import android.util.Base64
+import javax.crypto.SecretKey
 
 class SecureStorageManager(context: Context) {
 
@@ -38,5 +41,17 @@ class SecureStorageManager(context: Context) {
     // Wipe the wallet (for the Settings -> Disconnect button later)
     fun clearWallet() {
         sharedPreferences.edit().clear().apply()
+    }
+
+    fun saveFileKey(fileId: String, key: SecretKey) {
+        val encodedKey = Base64.encodeToString(key.encoded, Base64.DEFAULT)
+        sharedPreferences.edit().putString("KEY_$fileId", encodedKey).apply()
+    }
+
+    // Retrieve the AES key for a specific fileId
+    fun getFileKey(fileId: String): SecretKey? {
+        val encodedKey = sharedPreferences.getString("KEY_$fileId", null) ?: return null
+        val decodedKey = Base64.decode(encodedKey, Base64.DEFAULT)
+        return SecretKeySpec(decodedKey, 0, decodedKey.size, "AES")
     }
 }

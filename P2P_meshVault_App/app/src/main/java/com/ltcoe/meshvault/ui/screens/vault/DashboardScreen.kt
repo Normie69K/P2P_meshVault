@@ -28,6 +28,7 @@ import com.ltcoe.meshvault.ui.theme.*
 import com.ltcoe.meshvault.util.ApiClient
 import com.ltcoe.meshvault.util.DashboardFile
 import com.ltcoe.meshvault.util.DownloadManager
+import com.ltcoe.meshvault.util.SecureStorageManager
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,6 +38,7 @@ fun DashboardScreen() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState()
+    val secureStorage = remember { SecureStorageManager(context) }
 
     // UI State
     var isLoading by remember { mutableStateOf(true) }
@@ -67,22 +69,29 @@ fun DashboardScreen() {
                     onClick = {
                         scope.launch {
                             showSheet = false
-                            Toast.makeText(context, "Initializing secure download...", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Fetching master key...", Toast.LENGTH_SHORT).show()
 
                             // 1. Trigger the real download & decrypt flow
                             // Note: You'll need to pass the real SecretKey from SecureStorage in the next step
-                            val success = DownloadManager.downloadAndDecryptFile(
-                                context = context,
-                                fileId = selectedFile!!.id,
-                                fileName = selectedFile!!.name,
-                                fileKey = null
-                            )
+                            val storedKey = secureStorage.getFileKey(selectedFile!!.id)
 
-                            if (success) {
-                                Toast.makeText(context, "File saved to Downloads", Toast.LENGTH_LONG).show()
-                            } else {
-                                Toast.makeText(context, "Decryption Failed", Toast.LENGTH_SHORT).show()
+                            if(storedKey != null){
+                                val success = DownloadManager.downloadAndDecryptFile(
+                                    context = context,
+                                    fileId = selectedFile!!.id,
+                                    fileName = selectedFile!!.name,
+                                    fileKey = storedKey
+                                )
+                                if (success) {
+                                    Toast.makeText(context, "File saved to Downloads", Toast.LENGTH_LONG).show()
+                                } else {
+                                    Toast.makeText(context, "Decryption Error : Check key Integrity", Toast.LENGTH_SHORT).show()
+                                }
+                            }else{
+                                Toast.makeText(context, "Error: Master Key not found on this device", Toast.LENGTH_SHORT).show()
                             }
+
+
                         }
                     },
                     modifier = Modifier.fillMaxWidth().height(56.dp),

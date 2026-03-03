@@ -31,6 +31,7 @@ import com.ltcoe.meshvault.util.FileChunk
 import com.ltcoe.meshvault.util.FileSharder
 import com.ltcoe.meshvault.util.ApiClient
 import com.ltcoe.meshvault.util.CryptoManager
+import com.ltcoe.meshvault.util.SecureStorageManager
 import kotlinx.coroutines.launch
 
 @Composable
@@ -157,29 +158,27 @@ fun UploadScreen() {
                     } else if (fileChunks.isNotEmpty()) {
                         Text("Sliced into ${fileChunks.size} chunks", color = AccentCyan, fontSize = 12.sp)
                         Spacer(modifier = Modifier.height(24.dp))
-
-                        // 2. The REAL Upload Button
                         Button(
                             onClick = {
                                 coroutineScope.launch {
                                     uploadStatus = "Generating AES-256 File Key..."
-                                    // 1. Generate a real AES key for this specific file
+
+                                    // 1. Generate ONE key for the whole file
                                     val fileKey = CryptoManager.generateFileKey()
+                                    val secureStorage = SecureStorageManager(context)
                                     var successfulUploads = 0
 
                                     for (chunk in fileChunks) {
                                         uploadStatus = "Encrypting & Uploading piece ${chunk.chunkIndex + 1}..."
 
-                                        // 1. Generate or retrieve the file's secret key (For now, we generate one)
-                                        val fileKey = CryptoManager.generateFileKey()
-
-                                        // 2. ACTUALLY USE THE CRYPTO ENGINE
+                                        // 2. Encrypt using that ONE key (no new key generated here!)
                                         val encryptedData = CryptoManager.encryptChunk(chunk.data, fileKey)
 
                                         // 3. Wrap the encrypted data back into a chunk object
                                         val secureChunk = chunk.copy(data = encryptedData)
 
-                                        val success = ApiClient.uploadChunk(chunk,fileTitle)
+                                        // 4. Send the SECURE chunk to Arch Linux (Fixed!)
+                                        val success = ApiClient.uploadChunk(secureChunk, fileTitle)
 
                                         if (success) {
                                             successfulUploads++
@@ -190,6 +189,8 @@ fun UploadScreen() {
                                     }
 
                                     if (successfulUploads == fileChunks.size) {
+                                        // 5. Save the master key!
+                                        secureStorage.saveFileKey(fileChunks[0].fileId, fileKey)
                                         uploadStatus = "Upload Complete! 100% Encrypted."
                                     }
                                 }
