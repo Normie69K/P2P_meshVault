@@ -1,5 +1,8 @@
 package com.ltcoe.meshvault.ui.screens.vault
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,6 +14,11 @@ import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,9 +31,37 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ltcoe.meshvault.ui.theme.*
+import com.ltcoe.meshvault.util.FileSharder
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 
 @Composable
 fun UploadScreen() {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var selectedFileUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedFileName by remember { mutableStateOf<String?>(null) }
+    var chunkCount by remember { mutableStateOf(0) }
+    var isProcessing by remember { mutableStateOf(false) }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            selectedFileUri = uri
+            selectedFileName = uri.path?.substringAfterLast('/')
+
+            // Launch the background work!
+            coroutineScope.launch {
+                isProcessing = true // Show loading
+                val shards = FileSharder.shardFile(context, uri)
+                chunkCount = shards.size
+                isProcessing = false // Hide loading
+                println("SUCCESS: Sliced ${selectedFileName} into ${shards.size} separate 1MB chunks!")
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()

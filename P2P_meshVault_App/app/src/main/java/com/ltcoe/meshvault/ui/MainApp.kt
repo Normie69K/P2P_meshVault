@@ -26,6 +26,10 @@ import com.ltcoe.meshvault.ui.screens.vault.SettingsScreen
 import com.ltcoe.meshvault.ui.screens.vault.UploadScreen
 import com.ltcoe.meshvault.ui.theme.DarkBackground
 import com.ltcoe.meshvault.util.SecureStorageManager
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 
 @Composable
 fun MainApp() {
@@ -61,13 +65,32 @@ fun MainApp() {
             }
         }
     ) { innerPadding ->
-        // Use the dynamic startRoute here instead of hardcoding Screen.Login.route
         NavHost(
             navController = navController,
             startDestination = startRoute,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(300)
+                ) + fadeIn(tween(300))
+            },
+            exitTransition = {
+                fadeOut(tween(300))
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(300)
+                ) + fadeIn(tween(300))
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(300)
+                ) + fadeOut(tween(300))
+            }
         ) {
-            // 1. Login Route
             composable(Screen.Login.route) { LoginScreen(navController = navController) }
 
             // 2. Dashboard Route
