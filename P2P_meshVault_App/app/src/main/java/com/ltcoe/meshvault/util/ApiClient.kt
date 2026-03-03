@@ -10,8 +10,8 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.isSuccess
 import org.json.JSONArray
+import io.ktor.client.call.body
 
-// NEW: Data class to hold the files fetched from Arch Linux
 data class DashboardFile(val id: String, val name: String, val details: String)
 
 object ApiClient {
@@ -25,7 +25,7 @@ object ApiClient {
                 url = "$BASE_URL/files/upload-chunk",
                 formData = formData {
                     append("fileId", chunk.fileId)
-                    append("fileTitle", fileTitle) // <-- Send the title!
+                    append("fileTitle", fileTitle)
                     append("chunkIndex", chunk.chunkIndex.toString())
                     append("chunkData", chunk.data, Headers.build {
                         append(HttpHeaders.ContentType, "application/octet-stream")
@@ -62,5 +62,17 @@ object ApiClient {
             e.printStackTrace()
         }
         return fileList // Return the real files!
+    }
+
+    suspend fun downloadChunk(fileId: String, index: Int): ByteArray? {
+        return try {
+            val response = client.get("$BASE_URL/files/download-chunk/$fileId/$index")
+            if (response.status.isSuccess()) {
+                response.body<ByteArray>()
+            } else null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 }

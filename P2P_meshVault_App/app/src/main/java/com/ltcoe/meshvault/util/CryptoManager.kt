@@ -59,4 +59,20 @@ object CryptoManager {
 
         return iv + encryptedBytes
     }
+
+    /**
+     * Unlocks an encrypted chunk using the same AES key used during upload.
+     */
+    fun decryptChunk(encryptedChunk: ByteArray, secretKey: SecretKey?): ByteArray {
+        val cipher = Cipher.getInstance(TRANSFORMATION)
+
+        // Extract the 12-byte IV we attached at the start of the chunk
+        val iv = encryptedChunk.sliceArray(0 until 12)
+        val cipherText = encryptedChunk.sliceArray(12 until encryptedChunk.size)
+
+        val parameterSpec = GCMParameterSpec(GCM_TAG_LENGTH, iv)
+        cipher.init(Cipher.DECRYPT_MODE, secretKey, parameterSpec)
+
+        return cipher.doFinal(cipherText)
+    }
 }

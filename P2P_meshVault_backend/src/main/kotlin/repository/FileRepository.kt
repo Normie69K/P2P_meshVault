@@ -25,21 +25,6 @@ class FileRepository {
         return metadata
     }
 
-    fun findById(fileId: String): FileMetadata? {
-        return transaction {
-            Files.select { Files.fileId eq fileId }.map { row ->
-                FileMetadata(
-                    fileId = row[Files.fileId],
-                    ownerPublicKey = row[Files.ownerPublicKey],
-                    fileName = row[Files.fileName],
-                    fileSize = row[Files.fileSize],
-                    chunkMap = Json.decodeFromString(row[Files.chunkMap]),
-                    createdAt = row[Files.createdAt]
-                )
-            }.singleOrNull()
-        }
-    }
-
     fun findByOwner(publicKey: String): List<FileMetadata> {
         return transaction {
             Files.select { Files.ownerPublicKey eq publicKey }.map { row ->

@@ -18,6 +18,7 @@ import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.plugins.calllogging.CallLogging
+import io.ktor.server.response.respondText
 import io.ktor.server.routing.*
 import routes.fileRoutes
 
@@ -57,5 +58,8 @@ fun Application.module() {
         nodeRoutes(nodeService)
         fileRoutes(fileService)
         creditRoutes(creditService)
+        get("/health"){
+            call.respondText("OK")
+        }
     }
 }

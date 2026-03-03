@@ -167,11 +167,18 @@ fun UploadScreen() {
                                     val fileKey = CryptoManager.generateFileKey()
                                     var successfulUploads = 0
 
-                                    // Loop through every 1MB slice and send it over the internet!
                                     for (chunk in fileChunks) {
-                                        uploadStatus = "Uploading piece ${chunk.chunkIndex + 1} of ${fileChunks.size}..."
+                                        uploadStatus = "Encrypting & Uploading piece ${chunk.chunkIndex + 1}..."
 
-                                        // THIS IS THE REAL API CALL
+                                        // 1. Generate or retrieve the file's secret key (For now, we generate one)
+                                        val fileKey = CryptoManager.generateFileKey()
+
+                                        // 2. ACTUALLY USE THE CRYPTO ENGINE
+                                        val encryptedData = CryptoManager.encryptChunk(chunk.data, fileKey)
+
+                                        // 3. Wrap the encrypted data back into a chunk object
+                                        val secureChunk = chunk.copy(data = encryptedData)
+
                                         val success = ApiClient.uploadChunk(chunk,fileTitle)
 
                                         if (success) {

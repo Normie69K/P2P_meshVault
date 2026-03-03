@@ -16,7 +16,7 @@ fun Route.fileRoutes(fileService: FileService) {
             val multipartData = call.receiveMultipart()
 
             var fileId = ""
-            var fileTitle = "Encrypted_File" // Default title
+            var fileTitle = "Encrypted_File"
             var chunkIndex = -1
             var chunkBytes: ByteArray? = null
 
@@ -25,7 +25,7 @@ fun Route.fileRoutes(fileService: FileService) {
                     is PartData.FormItem -> {
                         when (part.name) {
                             "fileId" -> fileId = part.value
-                            "fileTitle" -> fileTitle = part.value // <-- Read the title from Android!
+                            "fileTitle" -> fileTitle = part.value
                             "chunkIndex" -> chunkIndex = part.value.toIntOrNull() ?: -1
                         }
                     }
@@ -80,6 +80,18 @@ fun Route.fileRoutes(fileService: FileService) {
                 }
             }
             call.respond(HttpStatusCode.OK, filesList) // Sends data as JSON!
+        }
+
+        get("/download-chunk/{fileId}/{index}") {
+            val fileId = call.parameters["fileId"]
+            val index = call.parameters["index"]
+            val chunkFile = File("storage/chunks/$fileId/chunk_$index.bin")
+
+            if (chunkFile.exists()) {
+                call.respondFile(chunkFile)
+            } else {
+                call.respond(HttpStatusCode.NotFound, "Chunk not found")
+            }
         }
     }
 }
