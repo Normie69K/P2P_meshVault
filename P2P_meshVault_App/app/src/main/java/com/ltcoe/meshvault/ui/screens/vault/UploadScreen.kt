@@ -172,7 +172,7 @@ fun UploadScreen() {
                                         uploadStatus = "Uploading piece ${chunk.chunkIndex + 1} of ${fileChunks.size}..."
 
                                         // THIS IS THE REAL API CALL
-                                        val success = ApiClient.uploadChunk(chunk)
+                                        val success = ApiClient.uploadChunk(chunk,fileTitle)
 
                                         if (success) {
                                             successfulUploads++

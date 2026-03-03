@@ -23,14 +23,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ltcoe.meshvault.ui.theme.*
 import kotlinx.coroutines.delay
+import com.ltcoe.meshvault.util.ApiClient
+import com.ltcoe.meshvault.util.DashboardFile
 
 @Composable
 fun DashboardScreen() {
     val scrollState = rememberScrollState()
     var isLoading by remember { mutableStateOf(true) }
+    var realFiles by remember { mutableStateOf<List<DashboardFile>>(emptyList()) }
 
     LaunchedEffect(Unit) {
-        delay(1500)
+        realFiles = ApiClient.getMyFiles()
         isLoading = false
     }
 
@@ -167,9 +170,13 @@ fun DashboardScreen() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            FileItem("Project_Alpha_Specs.pdf", "2.4 MB • 2h ago")
-            FileItem("Design_Assets.zip", "145 MB • 5h ago")
-            FileItem("Q3_Financials.xlsx", "1.1 MB • 1d ago")
+            if (realFiles.isEmpty()) {
+                Text("Your vault is empty. Securely upload a file to see it here.", color = Color.LightGray, fontSize = 14.sp)
+            } else {
+                realFiles.forEach { file ->
+                    FileItem(name = file.name, meta = file.details)
+                }
+            }
 
             // Extra space at the bottom so the floating button doesn't hide the last file
             Spacer(modifier = Modifier.height(100.dp))
