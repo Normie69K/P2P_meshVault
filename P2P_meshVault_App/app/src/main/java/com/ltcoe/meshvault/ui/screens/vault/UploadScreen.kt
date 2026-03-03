@@ -44,8 +44,10 @@ fun UploadScreen() {
     // UI State
     var selectedFileUri by remember { mutableStateOf<Uri?>(null) }
     var fileTitle by remember { mutableStateOf("") }
-    var fileTag by remember { mutableStateOf("") } // NEW
-    var filePassword by remember { mutableStateOf("") } // NEW
+    var fileTag by remember { mutableStateOf("") }
+    var filePassword by remember { mutableStateOf("") }
+    var rentDuration by remember { mutableStateOf("Unlimited") }
+    val durationOptions = listOf("1 Hour", "24 Hours", "7 Days", "Unlimited")
     var fileChunks by remember { mutableStateOf<List<FileChunk>>(emptyList()) }
 
     // Upload Progress State
@@ -153,6 +155,33 @@ fun UploadScreen() {
                 singleLine = true, modifier = Modifier.fillMaxWidth(), enabled = !isUploading
             )
 
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Storage Rental Duration", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // --- RENT TIMER SELECTION ---
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                durationOptions.forEach { option ->
+                    val isSelected = rentDuration == option
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isSelected) AccentCyan else SurfaceDark)
+                            .clickable { rentDuration = option }
+                            .padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = option,
+                            color = if (isSelected) DarkBackground else Color.LightGray,
+                            fontSize = 12.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             // --- TERMINAL LOGS ---
@@ -183,7 +212,7 @@ fun UploadScreen() {
 
                                 uploadLogs.add(">> Pushing Shard ${chunk.chunkIndex + 1} to Node...")
                                 // Adding the tag to the title temporarily so the backend can see it without needing Ktor updates yet
-                                val finalTitle = if (fileTag.isNotBlank()) "[$fileTag] $fileTitle" else fileTitle
+                                val finalTitle = "[$fileTag] [$rentDuration] $fileTitle"
                                 val success = ApiClient.uploadChunk(secureChunk, finalTitle)
 
                                 if (success) {

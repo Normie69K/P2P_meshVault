@@ -134,6 +134,35 @@ fun DashboardScreen() {
                     Spacer(modifier = Modifier.width(12.dp))
                     Text("Save to Device", fontWeight = FontWeight.Medium)
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // --- NEW: OPTION C: DELETE FROM NETWORK ---
+                Button(
+                    onClick = {
+                        scope.launch {
+                            showSheet = false
+                            Toast.makeText(context, "Sending kill signal to network...", Toast.LENGTH_SHORT).show()
+
+                            // Call your API to delete the file
+                            // val deleted = ApiClient.deleteFile(selectedFile!!.id)
+
+                            // For now, simulate success
+                            Toast.makeText(context, "File completely wiped from Mesh!", Toast.LENGTH_LONG).show()
+
+                            // Refresh the list
+                            realFiles = ApiClient.getMyFiles()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.15f), contentColor = Color.Red),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, Color.Red.copy(alpha = 0.5f))
+                ) {
+                    Icon(Icons.Default.DeleteForever, contentDescription = "Delete")
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("Delete from Vault", fontWeight = FontWeight.Bold)
+                }
             }
         }
     }

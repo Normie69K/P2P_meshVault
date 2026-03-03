@@ -114,21 +114,39 @@ fun NodesScreen() {
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Text("ACTIVE CONNECTIONS", color = Color.LightGray, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+        // --- TIER 1: GLOBAL NETWORK (Internet) ---
+        Text("GLOBAL NETWORK", color = Color.LightGray, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- THE REAL DISCOVERED PEERS ---
+        // This represents your permanent Arch Linux server!
+        NodeItem(
+            id = "Arch Linux Master",
+            location = "archlinux.my-mesh.net",
+            status = "ONLINE"
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // --- TIER 2: LOCAL PEERS (Wi-Fi Radar) ---
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("LOCAL PEERS", color = Color.LightGray, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            if (isNodeActive) {
+                // A cool little scanning animation indicator
+                Text("Scanning...", color = AccentCyan, fontSize = 10.sp)
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+
         if (!isNodeActive) {
-            Text("Turn on your Local Node to discover peers.", color = Color.LightGray, fontSize = 14.sp)
+            Text("Turn on your Local Node to discover peers nearby.", color = Color.DarkGray, fontSize = 14.sp)
         } else if (MeshNetworkManager.activeNodes.isEmpty()) {
-            Text("Scanning local network for other Vaults...", color = AccentCyan, fontSize = 14.sp)
-            LinearProgressIndicator(color = AccentCyan, trackColor = DarkBackground, modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
+            LinearProgressIndicator(color = AccentCyan, trackColor = DarkBackground, modifier = Modifier.fillMaxWidth())
         } else {
-            // Loop through the live, dynamically discovered phones
+            // Live phones discovered by your radar!
             MeshNetworkManager.activeNodes.forEach { peer ->
                 NodeItem(
                     id = peer.id,
-                    location = peer.ip,
+                    location = "IP: ${peer.ip}",
                     status = "ONLINE"
                 )
             }
