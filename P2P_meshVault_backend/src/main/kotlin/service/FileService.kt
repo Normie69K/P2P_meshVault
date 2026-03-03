@@ -19,8 +19,12 @@ class FileService(
         // Simple Round-Robin distribution: assign chunks to nodes evenly
         val chunkMap = mutableMapOf<Int, String>()
         for (i in 0 until totalChunks) {
-            val assignedNode = activeNodes[i % activeNodes.size]
-            chunkMap[i] = assignedNode.nodeId
+            val assignedNodeId = if (activeNodes.isEmpty()) {
+                "local-server-node"
+            } else {
+                activeNodes[i % activeNodes.size].nodeId
+            }
+            chunkMap[i] = assignedNodeId
         }
 
         val metadata = FileMetadata(
@@ -35,9 +39,9 @@ class FileService(
         return fileRepository.save(metadata)
     }
 
-    fun getFile(fileId: String): FileMetadata? {
+    /*fun getFile(fileId: String): FileMetadata? {
         return fileRepository.findById(fileId)
-    }
+    }*/
 
     fun getUserFiles(publicKey: String): List<FileMetadata> {
         return fileRepository.findByOwner(publicKey)

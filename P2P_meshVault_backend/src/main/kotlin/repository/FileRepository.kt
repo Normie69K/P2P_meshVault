@@ -2,7 +2,6 @@ package com.ltcoe.repository
 
 import com.ltcoe.model.entity.FileMetadata
 import com.ltcoe.model.entity.Files
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -18,7 +17,7 @@ class FileRepository {
                 it[ownerPublicKey] = metadata.ownerPublicKey
                 it[fileName] = metadata.fileName
                 it[fileSize] = metadata.fileSize
-                it[chunkMap] = mapAsJson
+                it[chunkMap] = metadata.chunkMap.toString()
                 it[createdAt] = metadata.createdAt
             }
         }
@@ -33,7 +32,7 @@ class FileRepository {
                     ownerPublicKey = row[Files.ownerPublicKey],
                     fileName = row[Files.fileName],
                     fileSize = row[Files.fileSize],
-                    chunkMap = Json.decodeFromString(row[Files.chunkMap]),
+                    chunkMap = emptyMap(),
                     createdAt = row[Files.createdAt]
                 )
             }
