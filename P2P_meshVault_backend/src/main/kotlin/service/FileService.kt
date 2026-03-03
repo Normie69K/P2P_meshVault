@@ -6,11 +6,21 @@ import java.util.UUID
 
 class FileService(
     private val fileRepository: FileRepository,
-    private val nodeService: NodeService // We inject this to check for active nodes!
+    private val nodeService: NodeService
 ) {
 
     fun initiateUpload(ownerPublicKey: String, fileName: String, fileSize: Long, totalChunks: Int): FileMetadata {
         val activeNodes = nodeService.getActiveNodes()
+
+        val durationString = fileName.substringAfter("] [").substringBefore("]")
+        val ttlMillis: Long? = when (durationString) {
+            "1 Hour" -> 60 * 60 * 1000L
+            "24 Hours" -> 24 * 60 * 60 * 1000L
+            "7 Days" -> 7 * 24 * 60 * 60 * 1000L
+            else -> null
+        }
+
+        val expirationTime = if (ttlMillis != null) System.currentTimeMillis() + ttlMillis else null
 
         if (activeNodes.isEmpty()) {
             throw IllegalStateException("No active nodes available in the network to store files.")

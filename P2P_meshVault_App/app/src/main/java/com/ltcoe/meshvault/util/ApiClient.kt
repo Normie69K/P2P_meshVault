@@ -11,6 +11,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.isSuccess
 import org.json.JSONArray
 import io.ktor.client.call.body
+import io.ktor.client.request.delete
 
 data class DashboardFile(val id: String, val name: String, val details: String)
 
@@ -73,6 +74,16 @@ object ApiClient {
         } catch (e: Exception) {
             e.printStackTrace()
             null
+        }
+    }
+
+    suspend fun deleteFile(fileId: String): Boolean {
+        return try {
+            val response = client.delete("$BASE_URL/files/$fileId")
+            response.status.isSuccess()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
         }
     }
 }

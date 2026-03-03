@@ -20,7 +20,11 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import routes.fileRoutes
+import java.io.File
 
 fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
@@ -40,26 +44,45 @@ fun Application.module() {
     install(ContentNegotiation) {
         json()
     }
-    //Repository
+    // Repositories
     val userRepository = UserRepository()
     val nodeRepository = NodeRepository()
     val fileRepository = FileRepository()
     val creditRepository = CreditRepository()
 
-    //Service
+    // Services
     val authService = AuthService(userRepository)
     val nodeService = NodeService(nodeRepository)
-    val fileService = FileService(fileRepository , nodeService)
+    val fileService = FileService(fileRepository, nodeService)
     val creditService = CreditService(creditRepository)
 
-    // 2. Register Routes
+    // Register Routes
     routing {
         authRoutes(authService)
         nodeRoutes(nodeService)
-        fileRoutes(fileService)
+        fileRoutes(fileService, fileRepository)
         creditRoutes(creditService)
         get("/health"){
             call.respondText("OK")
+        }
+    }
+
+    launch(Dispatchers.IO) {
+        while (true) {
+            val now = System.currentTimeMillis()
+
+            val expiredFiles = fileRepository.findExpiredFiles(now)
+
+            for (file in expiredFiles) {
+                fileRepository.deleteById(file.fileId)
+
+                val fileDir = File("storage/chunks/${file.fileId}")
+                if (fileDir.exists()) fileDir.deleteRecursively()
+
+                println("🔥 AUTO-DESTRUCT: Wiped expired file ${file.fileId}")
+            }
+
+            delay(5 * 60 * 1000L)
         }
     }
 }

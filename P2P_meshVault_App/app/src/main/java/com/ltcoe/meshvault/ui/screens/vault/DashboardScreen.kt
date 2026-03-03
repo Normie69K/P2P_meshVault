@@ -144,10 +144,7 @@ fun DashboardScreen() {
                             showSheet = false
                             Toast.makeText(context, "Sending kill signal to network...", Toast.LENGTH_SHORT).show()
 
-                            // Call your API to delete the file
-                            // val deleted = ApiClient.deleteFile(selectedFile!!.id)
-
-                            // For now, simulate success
+                            val deleted = ApiClient.deleteFile(selectedFile!!.id)
                             Toast.makeText(context, "File completely wiped from Mesh!", Toast.LENGTH_LONG).show()
 
                             // Refresh the list

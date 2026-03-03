@@ -1,15 +1,15 @@
 package routes
 
+import com.ltcoe.repository.FileRepository
 import com.ltcoe.service.FileService
 import io.ktor.http.*
 import io.ktor.http.content.*
-import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.io.File
 
-fun Route.fileRoutes(fileService: FileService) {
+fun Route.fileRoutes(fileService: FileService, fileRepository: FileRepository) {
     route("/files") {
 
         post("/upload-chunk") {
@@ -92,6 +92,21 @@ fun Route.fileRoutes(fileService: FileService) {
             } else {
                 call.respond(HttpStatusCode.NotFound, "Chunk not found")
             }
+        }
+
+        delete("/{fileId}") {
+            val fileId = call.parameters["fileId"] ?: return@delete call.respond(HttpStatusCode.BadRequest, "Missing file ID")
+
+            // 3. Delete from Database
+            fileRepository.deleteById(fileId)
+
+            // 4. Delete the physical chunks from Arch Linux storage
+            val fileDir = File("storage/chunks/$fileId")
+            if (fileDir.exists()) {
+                fileDir.deleteRecursively()
+            }
+
+            call.respond(HttpStatusCode.OK, "File securely wiped")
         }
     }
 }
