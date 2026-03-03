@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.ltcoe.meshvault.ui.theme.*
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(onLogoutClick:() -> Unit) {
     val scrollState = rememberScrollState()
 
     Column(
@@ -108,7 +108,7 @@ fun SettingsScreen() {
 
         // --- 5. DISCONNECT BUTTON ---
         OutlinedButton(
-            onClick = { /* TODO: Disconnect node logic */ },
+            onClick = onLogoutClick,
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red),
             border = BorderStroke(1.dp, Color(0x33FF5252)), // Faded red border matching the design
             shape = RoundedCornerShape(12.dp),
