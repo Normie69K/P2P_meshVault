@@ -6,7 +6,7 @@ import io.ktor.client.request.forms.*
 import io.ktor.http.*
 
 object ApiClient {
-    private const val BASE_URL = "192.168.42.99/8000"
+    private const val BASE_URL = "https://p2p-meshvault.onrender.com"
 
     private val client = HttpClient(Android)
 
