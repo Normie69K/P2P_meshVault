@@ -7,7 +7,6 @@ import com.ltcoe.repository.NodeRepository
 import com.ltcoe.repository.UserRepository
 import com.ltcoe.routes.authRoutes
 import com.ltcoe.routes.creditRoutes
-import com.ltcoe.routes.fileRoutes
 import com.ltcoe.routes.nodeRoutes
 import com.ltcoe.service.AuthService
 import com.ltcoe.service.CreditService
@@ -20,6 +19,7 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.routing.*
+import routes.fileRoutes
 
 fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0") {

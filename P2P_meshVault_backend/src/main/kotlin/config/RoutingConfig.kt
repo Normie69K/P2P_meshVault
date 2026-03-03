@@ -1,1 +1,1 @@
-package com.ltcoe.config
+package config

@@ -1,58 +1,57 @@
-package com.ltcoe.routes
+package routes // Or whatever your package is
 
 import com.ltcoe.service.FileService
 import io.ktor.http.*
-import io.ktor.server.application.*
+import io.ktor.http.content.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.serialization.Serializable
-
-@Serializable
-data class InitiateUploadRequest(val publicKey: String, val fileName: String, val fileSize: Long, val totalChunks: Int)
+import java.io.File
 
 fun Route.fileRoutes(fileService: FileService) {
     route("/files") {
 
-        // 1. Client asks: "Where do I upload these chunks?"
-        post("/initiate") {
-            val request = try {
-                call.receive<InitiateUploadRequest>()
-            } catch (e: Exception) {
-                return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid request payload"))
+        post("/upload-chunk") {
+            val multipartData = call.receiveMultipart()
+
+            var fileId = ""
+            var chunkIndex = -1
+            var chunkBytes: ByteArray? = null
+
+            multipartData.forEachPart { part ->
+                when (part) {
+                    is PartData.FormItem -> {
+                        when (part.name) {
+                            "fileId" -> fileId = part.value
+                            "chunkIndex" -> chunkIndex = part.value.toIntOrNull() ?: -1
+                        }
+                    }
+                    is PartData.FileItem -> {
+                        if (part.name == "chunkData") {
+                            chunkBytes = part.streamProvider().readBytes()
+                        }
+                    }
+                    else -> {}
+                }
+                part.dispose()
             }
 
-            try {
-                val metadata = fileService.initiateUpload(
-                    request.publicKey,
-                    request.fileName,
-                    request.fileSize,
-                    request.totalChunks
-                )
-                call.respond(HttpStatusCode.Created, metadata)
-            } catch (e: Exception) {
-                // Catches the "No active nodes" error
-                call.respond(HttpStatusCode.ServiceUnavailable, mapOf("error" to e.message))
-            }
-        }
+            if (fileId.isNotBlank() && chunkIndex != -1 && chunkBytes != null) {
+                // Save the chunk to disk
+                val fileDir = File("storage/chunks/$fileId")
+                fileDir.mkdirs()
 
-        // 2. Client asks: "Where is my file located so I can download it?"
-        get("/{id}") {
-            val id = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-            val metadata = fileService.getFile(id)
+                val chunkFile = File(fileDir, "chunk_$chunkIndex.bin")
+                chunkFile.writeBytes(chunkBytes!!)
 
-            if (metadata != null) {
-                call.respond(HttpStatusCode.OK, metadata)
+                println("Received chunk $chunkIndex for file $fileId")
+
+                // TODO later: You can call fileService.saveChunkData(fileId, chunkIndex) here!
+
+                call.respond(HttpStatusCode.OK, mapOf("status" to "success"))
             } else {
-                call.respond(HttpStatusCode.NotFound, mapOf("error" to "File not found"))
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing data"))
             }
-        }
-
-        // 3. Get all files for a specific user
-        get("/user/{publicKey}") {
-            val publicKey = call.parameters["publicKey"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-            val files = fileService.getUserFiles(publicKey)
-            call.respond(HttpStatusCode.OK, files)
         }
     }
 }
