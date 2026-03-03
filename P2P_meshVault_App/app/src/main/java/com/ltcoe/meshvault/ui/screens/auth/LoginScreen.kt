@@ -2,18 +2,37 @@ package com.ltcoe.meshvault.ui.screens.auth
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AddModerator
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.VpnKey
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -21,10 +40,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.ltcoe.meshvault.ui.navigation.Screen
-import com.ltcoe.meshvault.ui.theme.*
+import com.ltcoe.meshvault.ui.theme.AccentCyan
+import com.ltcoe.meshvault.ui.theme.DarkBackground
+import com.ltcoe.meshvault.ui.theme.SurfaceDark
 import com.ltcoe.meshvault.util.CryptoManager
+import com.ltcoe.meshvault.util.SecureStorageManager
 
-// Define the three states of our login flow
 enum class AuthStep { WELCOME, CREATE, IMPORT }
 
 @Composable
@@ -96,6 +117,8 @@ fun WelcomeOptions(onCreateClick: () -> Unit, onImportClick: () -> Unit) {
 @Composable
 fun CreateWalletFlow(navController: NavController) {
     // 1. Generate the wallet ONLY ONCE when this screen opens
+    val context = LocalContext.current
+    val secureStorage = remember { SecureStorageManager(context) }
     val generatedWallet = remember { CryptoManager.createNewWallet() }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -140,7 +163,10 @@ fun CreateWalletFlow(navController: NavController) {
 
         Button(
             onClick = {
-                // TODO: Save the generatedWallet.privateKeyHex to Android EncryptedSharedPreferences here!
+                secureStorage.saveWallet(
+                    privateKeyHex = generatedWallet.privateKeyHex,
+                    publicKeyHex = generatedWallet.publicKeyHex
+                )
 
                 navController.navigate(Screen.Dashboard.route) {
                     popUpTo(Screen.Login.route) { inclusive = true }

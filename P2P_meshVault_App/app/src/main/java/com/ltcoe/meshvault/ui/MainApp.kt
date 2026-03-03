@@ -8,11 +8,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -25,34 +25,35 @@ import com.ltcoe.meshvault.ui.screens.vault.NodesScreen
 import com.ltcoe.meshvault.ui.screens.vault.SettingsScreen
 import com.ltcoe.meshvault.ui.screens.vault.UploadScreen
 import com.ltcoe.meshvault.ui.theme.DarkBackground
+import com.ltcoe.meshvault.util.SecureStorageManager
 
 @Composable
-@Preview
 fun MainApp() {
-    // The "Remote Control" for switching screens
     val navController = rememberNavController()
+    val context = LocalContext.current
 
-    // Observes which screen we are currently on
+    // Check if the user already has a wallet
+    val secureStorage = remember { SecureStorageManager(context) }
+    val startRoute = if (secureStorage.hasWallet()) Screen.Dashboard.route else Screen.Login.route
+
+    // Track the current route to hide/show bottom bar
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route ?: Screen.Login.route
+    val currentRoute = navBackStackEntry?.destination?.route
 
     Scaffold(
         containerColor = DarkBackground,
         bottomBar = {
-            // Only show the bottom bar if we are NOT on the Login screen
             if (currentRoute != Screen.Login.route) {
                 CustomBottomNavBar(
-                    currentRoute = currentRoute,
+                    currentRoute = currentRoute ?: "",
                     onNavigate = { route ->
+                        // This handles the actual navigation when a bottom tab is clicked
                         navController.navigate(route) {
-                            // Pop up to the start destination of the graph to
-                            // avoid building up a large stack of destinations
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
+                            // These standard flags prevent the app from opening 50 copies of the same screen
+                            navController.graph.startDestinationRoute?.let { startRoute ->
+                                popUpTo(startRoute) { saveState = true }
                             }
-                            // Avoid multiple copies of the same destination
                             launchSingleTop = true
-                            // Restore state when reselecting a previously selected item
                             restoreState = true
                         }
                     }
@@ -60,14 +61,12 @@ fun MainApp() {
             }
         }
     ) { innerPadding ->
-
-        // The "TV Screen" where the actual UI is displayed
+        // Use the dynamic startRoute here instead of hardcoding Screen.Login.route
         NavHost(
             navController = navController,
-            startDestination = Screen.Login.route,
+            startDestination = startRoute,
             modifier = Modifier.padding(innerPadding)
         ) {
-
             // 1. Login Route
             composable(Screen.Login.route) { LoginScreen(navController = navController) }
 
